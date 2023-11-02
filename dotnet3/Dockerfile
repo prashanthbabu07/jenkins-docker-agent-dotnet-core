@@ -1,13 +1,3 @@
-# # Use the jenkins/agent:alpine-jdk11 image as the base image
-# FROM jenkins/agent:alpine-jdk11
-# USER root
-# # Install dependencies required for .NET Core
-# RUN apk --no-cache add \
-# 	curl 
-# #RUN apk add dotnet-sdk-3.1
-# # RUN apt install dotnet-sdk-3.1
-# # RUN wget https://dot.net/v1/dotnet-install.sh
-# # RUN sh dotnet-install.sh -c 3.1.412
 
 FROM jenkins/agent:alpine-jdk11
 
