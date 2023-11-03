@@ -1,0 +1,134 @@
+pipeline {
+    agent {
+            label 'docker-agent-dotnet3'
+    }
+
+    environment {
+        GIT_CREDENTIALS_ID = 'superapp-build-jenkins-token' // ID of the Git credentials stored in Jenkins
+        MAC_CREDENTIALS_ID = 'prahanth-macbook-pro-credentials'
+        SSH_USERNAME = 'prashanth'
+        SSH_SERVER = '192.168.29.184'
+        SSH_PASSWORD = 'J@ihind07'
+        REMOTE_DIR = '/Volumes/Sandisk/Downloads/temp/test'
+        SOURCE_DIR = '/home/jenkins/workspace/superapp-build-job/SuperApp.Solutions/SuperApp.Web.API/bin/Debug/netcoreapp3.1/publish'
+    }
+
+    stages {
+
+		stage('Add SSH Host Key') {
+            steps {
+                script {
+                    sh "mkdir -p /root/.ssh"
+                    sh "ssh-keyscan ${env.SSH_SERVER} >> /root/.ssh/known_hosts"
+                }
+            }
+        }
+        
+        stage('Add sshpass') {
+            steps {
+                script {
+                    sh "apk add sshpass"
+                }
+            }
+        }
+
+		stage('SSH to Server and Run Commands') {
+            steps {
+                script {
+                    sh """
+						sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} 'ls -ltr'
+                        # sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} '/usr/local/bin/docker --version'
+						sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} '/usr/local/bin/docker ps'
+                        # sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} 'docker ps'
+                        # Add more SSH commands here as needed
+                    """
+                }
+            }
+        }
+        
+        stage('Git Clone') {
+            steps {
+                // script {
+                // // Clone the Git repository using the specified credentials
+                git credentialsId: GIT_CREDENTIALS_ID, url: 'https://github.com/prashanthbabu07/super-app.git', branch: 'master'
+                //sh 'cd SuperApp.Solutions'
+                //sh 'ls -l'
+                
+                // Define the Git repository URL
+                    // def gitRepoUrl = 'https://github.com/prashanthbabu07/super-app.git'
+                    
+                    // Use the checkout step with credentials and scm parameters
+                    // checkout([$class: 'GitSCM', 
+                    //     branches: [[name: '*/master']], // Branch to checkout
+                    //     userRemoteConfigs: [[url: gitRepoUrl]],
+                    //     extensions: [[$class: 'SubmoduleOption', recursiveSubmodules: true]], // Enable recursive submodules
+                    //     doGenerateSubmoduleConfigurations: false, // Disable submodule configurations generation
+                    //     credentialsId: env.GIT_CREDENTIALS_ID // Use the credentials from the 'withCredentials' block
+                    // ])
+                // }
+            }
+        }
+        
+        stage('Change Directory') {
+            steps {
+                // Change the working directory to the my-repo/src directory
+                dir('SuperApp.Solutions/SuperApp.Web.API') {
+                    // Run commands in the my-repo/src directory
+                    sh 'ls -ltr'
+                }
+            }
+        }
+
+        stage('Build') {
+           steps {
+                // Change the working directory to the my-repo/src directory
+                dir('SuperApp.Solutions/SuperApp.Web.API') {
+                    // Run commands in the my-repo/src directory
+                    sh 'dotnet build'
+                }
+            }
+        }
+
+        stage('Publish') {
+            steps {
+                // Publish the .NET Core application
+                dir('SuperApp.Solutions/SuperApp.Web.API') {
+                    // Run commands in the my-repo/src directory
+                    sh 'dotnet publish'
+                }
+            }
+        }
+        
+        // stage('Add SSH Host Key') {
+        //     steps {
+        //         script {
+        //             sh "ssh-keyscan ${env.SSH_SERVER} >> ~/.ssh/known_hosts"
+        //         }
+        //     }
+        // }
+        
+        
+        
+        // stage('Copy Directory to Remote Server') {
+        //     steps {
+        //         script {
+        //             // Start an SSH agent and add the credentials
+        //             sshagent(credentials: [MAC_CREDENTIALS_ID]) {
+        //                 // Use scp to copy the directory from the Docker container to the remote server
+        //                 sh """
+        //                     scp -r ${env.SOURCE_DIR} ${env.SSH_USERNAME}@${env.SSH_SERVER}:${env.REMOTE_DIR}
+        //                 """
+        //             }
+        //         }
+        //     }   
+        // }
+        
+        stage('Copy Directory to SSH Server') {
+            steps {
+                script {
+                    sh "sshpass -p \${SSH_PASSWORD} scp -r ${env.SOURCE_DIR} ${env.SSH_USERNAME}@${env.SSH_SERVER}:${env.REMOTE_DIR}"
+                }
+            }
+        }
+    }
+}
