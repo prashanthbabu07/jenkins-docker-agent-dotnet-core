@@ -4,6 +4,7 @@ USER root
 
 # Install dependencies required for .NET Core
 RUN apk --no-cache add \
+	sshpass \
 	curl 
 
 RUN apk add dotnet7-sdk

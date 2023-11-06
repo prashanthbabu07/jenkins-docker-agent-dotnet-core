@@ -9,6 +9,7 @@ USER root
 #     ca-certificates
 
 RUN apk add --no-cache \
+	sshpass \
 	ca-certificates \
 	curl \
 	\
