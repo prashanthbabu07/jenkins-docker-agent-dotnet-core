@@ -8,7 +8,7 @@ pipeline {
         MAC_CREDENTIALS_ID = 'prahanth-macbook-pro-credentials'
         SSH_USERNAME = 'prashanth'
         SSH_SERVER = '192.168.29.184'
-        SSH_PASSWORD = 'J@ihind07'
+        SSH_PASSWORD = ''
         REMOTE_DIR = '/Volumes/Sandisk/Downloads/temp/test'
         SOURCE_DIR = '/home/jenkins/workspace/superapp-build-job/SuperApp.Solutions/SuperApp.Web.API/bin/Debug/netcoreapp3.1/publish'
     }
