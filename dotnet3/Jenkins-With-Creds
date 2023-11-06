@@ -1,0 +1,70 @@
+pipeline {
+    agent {
+            label 'docker-agent-dotnet3'
+    }
+
+    environment {
+        GIT_CREDENTIALS_ID = 'superapp-build-jenkins-token' // ID of the Git credentials stored in Jenkins
+        MAC_CREDENTIALS_ID = 'prahanth-macbook-pro-credentials'
+        // SSH_USERNAME = 'prashanth'
+        SSH_SERVER = '192.168.29.184'
+        // SSH_PASSWORD = ''
+        REMOTE_DIR = '/Volumes/Sandisk/Downloads/temp/test'
+        SOURCE_DIR = '/home/jenkins/workspace/superapp-build-job/SuperApp.Solutions/SuperApp.Web.API/bin/Debug/netcoreapp3.1/publish'
+    }
+
+    stages {
+
+		stage('Add SSH Host Key') {
+            steps {
+                script {
+                    sh "mkdir -p /root/.ssh"
+                    sh "ssh-keyscan ${env.SSH_SERVER} >> /root/.ssh/known_hosts"
+                }
+            }
+        }
+        
+        stage('Add sshpass') {
+            steps {
+                script {
+                    sh "apk add sshpass"
+                }
+            }
+        }
+
+        stage('Load credentials') {
+             steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'prahanth-macbook-pro-credentials', usernameVariable: 'SSH_USERNAME', passwordVariable: 'SSH_PASSWORD')]) {
+                        //sh 'svn commit xxx.ear -m "Comment" --username $USERNAME --password $PASSWORD'
+                        sh 'echo $SSH_PASSWORD'
+                        // also available as a Groovy variable
+                        echo SSH_USERNAME
+                        // or inside double quotes for string interpolation
+                        echo "username is $SSH_USERNAME"
+                        // sh "password is $PASSWORD"
+                        sh """
+                            sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} 'ls -ltr'
+                        """ 
+                    }
+                }
+             }
+        }
+
+		stage('SSH to Server and Run Commands') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'prahanth-macbook-pro-credentials', usernameVariable: 'SSH_USERNAME', passwordVariable: 'SSH_PASSWORD')]) {
+                    sh """
+						sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} 'ls -ltr'
+                        # sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} '/usr/local/bin/docker --version'
+						sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} '/usr/local/bin/docker ps'
+                        # sshpass -p \${SSH_PASSWORD} ssh \${SSH_USERNAME}@\${SSH_SERVER} 'docker ps'
+                        # Add more SSH commands here as needed
+                    """
+                    }
+                }
+            }
+        }
+    }
+}
